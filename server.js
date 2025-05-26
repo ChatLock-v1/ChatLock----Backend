@@ -1,39 +1,43 @@
-const express = require("express")
-const cors = require("cors")
-const bodyParser = require("body-parser")
-const cookieParser = require("cookie-parser")
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import dotEnv from "dotenv";
+import { router } from "./routes/userRoutes.js";
+import { Server as SocketIOServer } from "socket.io";
+import http from "http";
+import { setupSocket } from "./sockets/socketManager.js";
+import { connectDB } from "./config/db.js";
+dotEnv.config();
 
 
+const app = express();
+const PORT = 3000;
 
-
-
-const app = express()
-app.use(cors())
-
-// port no. for server run
-const PORT = 3000
-
-// pass data from the form
-// .............................
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// middleware Passing Incoming Data
-// .......................................
 app.use(bodyParser.json());
+app.use(cookieParser());
+// app.use(cors()); // optional, depending on your use
+
+// Routes
+app.use('/', router);
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Setup Socket.IO
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: '*', // Adjust this in production
+  },
+});
 
 
-// here all the routes which is needed 
-// for example  1 chat, 2 social 
+setupSocket(io)
 
-
-
-
-
-
-
-
-
-// server listen
-app.listen(PORT, () => {
-    console.log(`Server started at http://localhost:${PORT}`)
-})
+// Start server
+connectDB()
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
