@@ -4,18 +4,13 @@ import {generateToken} from '../utils/generateToken.js';
 import dotenv from "dotenv"
 dotenv.config()
 
-
-
-
-// const crypto = require('crypto');
 import crypto from "crypto"
 import bcrypt from 'bcryptjs';
 
-// const bcrypt = require('bcryptjs');
 
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password  ,socketId} = req.body;
+    const { username, email, password ,socketId } = req.body;
 
     // Validate required fields
     if (!username || !email || !password) {
@@ -42,7 +37,7 @@ export const registerUser = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      socketId: socketId || null,
+      socketId
     });
 
     // Respond with safe user info
@@ -80,41 +75,40 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required.' });
     }
 
-    // Find user (with password included)
+    // Find user with password
     const user = await User.findOne({ email }).select('+password');
-
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
-    // Compare passwords
+    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
-    // Update login count and device tracking
+    // Update device info if not already stored
     if (deviceInfo && !user.loginDevices.includes(deviceInfo)) {
       user.loginDevices.push(deviceInfo);
     }
+
     user.loginCount = user.loginDevices.length;
-    if (socketId) {
+
+    // Store current socketId if provided
+    if (socketId && socketId !== user.socketId) {
       user.socketId = socketId;
     }
 
     await user.save();
 
-
     const token = generateToken(user._id);
 
-    // Send safe user data back
     res.status(200).json({
-       
       message: 'Login successful.',
-       token,
+      token,
       user: {
         id: user._id,
-        username: user.username, 
+        username: user.username,
         email: user.email,
         friends: user.friends,
         groups: user.groups,
@@ -124,6 +118,7 @@ export const loginUser = async (req, res) => {
         createdAt: user.createdAt,
       },
     });
+
   } catch (err) {
     console.error('❌ Login error:', err);
     res.status(500).json({ message: 'Server error during login.' });
