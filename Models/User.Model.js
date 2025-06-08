@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
 
     name: {
       type: String,
-    //   required: true,
+      //   required: true,
       trim: true,
       maxlength: 100,
     },
@@ -53,11 +53,29 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // Friends list - array of user IDs
-    friends: [
+    following: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+      },
+    ],
+    follower: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    post: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'post',
+      },
+    ],
+
+    bookmark: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'post',
       },
     ],
 

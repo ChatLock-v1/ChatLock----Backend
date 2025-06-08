@@ -9,3 +9,5 @@ export const generateToken = (userId) => {
     expiresIn: '7d',
   });
 };
+
+
