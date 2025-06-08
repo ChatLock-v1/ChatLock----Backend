@@ -18,7 +18,10 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
-// app.use(cors()); // optional, depending on your use
+app.use(cors({
+  origin:"http://localhost:5173",
+  credentials:true
+})); // optional, depending on your use
 
 // Routes
 app.use('/', router);
