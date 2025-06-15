@@ -8,6 +8,7 @@ import { Server as SocketIOServer } from "socket.io";
 import http from "http";
 import { setupSocket } from "./sockets/socketManager.js";
 import { connectDB } from "./config/db.js";
+import rateLimit from "express-rate-limit";
 dotEnv.config();
 
 
@@ -24,6 +25,20 @@ app.use(cors({
 })); // optional, depending on your use
 
 // Routes
+
+
+//rateLimit
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
+});
+
+app.use(limiter)
+ 
 app.use('/', router);
 
 // Create HTTP server

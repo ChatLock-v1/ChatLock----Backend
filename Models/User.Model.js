@@ -43,6 +43,18 @@ const userSchema = new mongoose.Schema(
       default: '',
     },
 
+    bio: {
+      type: String,
+      default: 'ChatLock User',
+    },
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other'],
+    },
+    isActive: {
+      type: String,
+      enum: ['Online', 'Offline']
+    },
     loginDevices: {
       type: [String],
       default: [],
