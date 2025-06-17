@@ -1,7 +1,6 @@
 
 import { User } from '../Models/User.Model.js';
 import { generateToken } from '../utils/generateToken.js';
-// import { generateResetToken } from '../utils/generateResetToken.js';
 import dotenv from "dotenv"
 
 
@@ -139,39 +138,19 @@ export const loginUser = async (req, res) => {
 
 
 
-export const logoutUser = async (serverUrl, token, socket, navigate) => {
+export const logOut = async (req, res) => {
   try {
-    // Call backend logout endpoint with token auth header
-    await axios.post(
-      `${serverUrl}/logout`,
-      {}, // no body needed here
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    // Clear token from localStorage
-    localStorage.removeItem('chatlock_token');
-
-    // Clear socketId on client side if you want to disconnect socket
-    if (socket) {
-      socket.emit('logout');  // optional, if you want to notify server socket logout event
-      socket.disconnect();
-    }
-
-    // Redirect to login page
-    navigate('/login');
-
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true, // set to true if using HTTPS
+      sameSite: "Strict", // or "Lax", depending on your needs
+    });
+    return res.status(200).json({ message: "Logged out successfully." });
   } catch (error) {
-    console.error('Logout failed:', error.response?.data || error.message);
-    // You may still want to clear local data on failure depending on UX decision
-    localStorage.removeItem('chatlock_token');
-    if (socket) socket.disconnect();
-    navigate('/login');
+    return res.status(500).json({ message: "Server error during logout." });
   }
 };
+
 
 
 
@@ -277,49 +256,49 @@ export const editProfile = async (req, res) => {
 
 }
 
-export const getMutualSuggestions = async (req, res) => {
-  try {
-    const currentUser = await User.findById(req.id)
-      .populate('following', 'following');
+// export const getMutualSuggestions = async (req, res) => {
+//   try {
+//     const currentUser = await User.findById(req.id)
+//       .populate('following', 'following');
 
-    const exclusiveList = [
-      ...currentUser.following.map(u => u._id.toString()),
-      currentUser._id.toString()
-    ];
+//     const exclusiveList = [
+//       ...currentUser.following.map(u => u._id.toString()),
+//       currentUser._id.toString()
+//     ];
 
-    let mutualMap = {};
+//     let mutualMap = {};
 
-    currentUser.following.forEach(friend => {
-      friend.following.forEach(followerId => {
-        const id = followerId.toString();
-        if (!exclusiveList.includes(id)) {
-          mutualMap[id] = (mutualMap[id] || 0) + 1;
-        }
-      });
-    });
+//     currentUser.following.forEach(friend => {
+//       friend.following.forEach(followerId => {
+//         const id = followerId.toString();
+//         if (!exclusiveList.includes(id)) {
+//           mutualMap[id] = (mutualMap[id] || 0) + 1;
+//         }
+//       });
+//     });
 
-    const potentialUsers = await User.find({
-      _id: { $nin: exclusiveList },
-      isActive: true,
-    }).select('username bio profilePic');
+//     const potentialUsers = await User.find({
+//       _id: { $nin: exclusiveList },
+//       isActive: true,
+//     }).select('username bio profilePic');
 
-    const suggestionsWithScore = potentialUsers.map(user => {
-      const score = mutualMap[user._id.toString()] || 0;
-      return { user, score };
-    });
+//     const suggestionsWithScore = potentialUsers.map(user => {
+//       const score = mutualMap[user._id.toString()] || 0;
+//       return { user, score };
+//     });
 
-    const finalSuggestions = suggestionsWithScore
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10)
-      .map(item => item.user);
+//     const finalSuggestions = suggestionsWithScore
+//       .sort((a, b) => b.score - a.score)
+//       .slice(0, 10)
+//       .map(item => item.user);
 
-    res.json({ suggestions: finalSuggestions });
+//     res.json({ suggestions: finalSuggestions });
 
-  } catch (err) {
-    console.error("❌ Error in suggestion:", err);
-    res.status(500).json({ message: 'Server error while fetching suggestions' });
-  }
-};
+//   } catch (err) {
+//     console.error("❌ Error in suggestion:", err);
+//     res.status(500).json({ message: 'Server error while fetching suggestions' });
+//   }
+// };
 
 
 
@@ -399,3 +378,71 @@ export const getMutualSuggestions = async (req, res) => {
 //     res.status(500).json({ message: 'Server error while fetching suggestions' });
 //   }
 // };
+
+
+
+export const getSuggestedUser = async (req, res) => {
+  try {
+
+    const currentUser = req.id;
+    const suggestionUxser = await User.find({ id: { $ne: currentUser } }).select("-password")
+
+    if (!suggestionUxser) return res.status(400).json({ message: "Suggested user not found" });
+
+    return res.status(200).json({
+      success: true,
+      users: suggestionUxser
+    })
+
+
+
+  } catch (error) {
+    console.error(err);
+    res.status(400).json({ message: 'SuggestedUser give error' });
+  }
+}
+
+
+
+
+export const followORUnfollow = async (req, res) => {
+  try {
+    const followKarneWala = req.id;
+
+    const jiskoFollweKruga = req.params.id;
+
+    if (followKarneWala === jiskoFollweKruga) {
+      return res.status(400).json({ message: "You can follow/unfollow userself" })
+    }
+
+    const user = await User.findById(followKarneWala)
+
+    const targetUser = await User.findById(jiskoFollweKruga)
+
+    if (!user || !targetUser) {
+      return res.status(400).json({ message: "User Not Found" })
+    }
+
+    const isFollow = user.following.includes(targetUser)
+
+
+    if (isFollow) {
+      await Promise.all([
+        //unfollw
+        user.updateOne({ _id: followKarneWala }, { $pull: { following: jiskoFollweKruga } }),
+        user.updateOne({ _id: jiskoFollweKruga }, { $pull: { follower: followKarneWala } })
+      ])
+      res.status(200).json({ message: "Unfollow Successfullly" })
+    } else {
+      //follow
+      await Promise.all([
+        user.updateOne({ _id: followKarneWala }, { $push: { following: jiskoFollweKruga } }),
+        user.updateOne({ _id: jiskoFollweKruga }, { $push: { follower: followKarneWala } })
+      ])
+      res.status(200).json({ message: "follow Successfullly" })
+    }
+  } catch (error) {
+    console.error(err);
+    res.status(400).json({ message: 'FollowORUnfollow give error' });
+  }
+}
