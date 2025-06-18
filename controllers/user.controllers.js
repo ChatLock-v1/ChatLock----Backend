@@ -222,8 +222,8 @@ export const getProfile = async (req, res) => {
 export const editProfile = async (req, res) => {
   try {
     const userId = req.id;
-    const { bio, name, gender } = req.body
-    const { profilePic } = req.file
+    const { bio, name, gender ,username } = req.body
+    const  profilePic  = req.file
     let cloudnaryResponse;
 
     if (profilePic) {
@@ -238,9 +238,13 @@ export const editProfile = async (req, res) => {
 
 
     if (bio) user.bio = bio;
-    if (name) user.bio = name;
+    if (name) user.name = name;
     if (gender) user.gender = gender;
+     if (username) user.username = username;
     if (profilePic) user.profilePic = cloudnaryResponse.secure_url;
+
+    console.log(profilePic);
+    
 
 
     await user.save()
@@ -250,7 +254,7 @@ export const editProfile = async (req, res) => {
 
 
   } catch (error) {
-    console.error(err);
+    console.error(error);
     res.status(400).json({ message: 'Edit profile give error' });
   }
 
