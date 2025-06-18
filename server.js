@@ -39,6 +39,11 @@ const limiter = rateLimit({
 
 app.use(limiter)
  
+
+app.get("/" , (req,res)=>{
+  res.send("I am Backend")
+})
+
 app.use('/', router);
 
 // Create HTTP server
