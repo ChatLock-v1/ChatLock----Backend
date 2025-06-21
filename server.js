@@ -4,6 +4,8 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import dotEnv from "dotenv";
 import { router } from "./routes/userRoutes.js";
+import { router as post } from "./routes/postRoutes.js";
+
 import { Server as SocketIOServer } from "socket.io";
 import http from "http";
 import { setupSocket } from "./sockets/socketManager.js";
@@ -45,6 +47,7 @@ app.get("/" , (req,res)=>{
 })
 
 app.use('/', router);
+app.use("/post" ,post)
 
 // Create HTTP server
 const server = http.createServer(app);

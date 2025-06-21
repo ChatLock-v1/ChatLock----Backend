@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema(
 
     profilePic: {
       type: String,
-      default: '',
+      default: 'https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg',
     },
 
     bio: {

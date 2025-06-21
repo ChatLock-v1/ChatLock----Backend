@@ -208,12 +208,15 @@ export const logOut = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const userId = req.params.id;
-    let user = await User.findById(userId)
-    return res.status(200).json({ user });
+    const userId = req.id; // from token
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ user });
   } catch (error) {
-    console.error(err);
-    res.status(400).json({ message: 'feting profile give error' });
+    console.error(error);
+    res.status(400).json({ message: 'Fetching profile failed' });
   }
 
 }
@@ -222,11 +225,16 @@ export const getProfile = async (req, res) => {
 export const editProfile = async (req, res) => {
   try {
     const userId = req.id;
-    const { bio, name, gender ,username } = req.body
-    const  profilePic  = req.file
+    const { bio, name, gender, username } = req.body
+    const profilePic = req.file;
+
+    if (!profilePic) return res.status(404).json({ message: "ProfilePic not set please fix" })
+
     let cloudnaryResponse;
 
     if (profilePic) {
+      console.log(fileUri);
+
       const fileUri = getDataUri(profilePic)
       cloudnaryResponse = await cloudinary.uploader.upload(fileUri)
     }
@@ -240,11 +248,11 @@ export const editProfile = async (req, res) => {
     if (bio) user.bio = bio;
     if (name) user.name = name;
     if (gender) user.gender = gender;
-     if (username) user.username = username;
+    if (username) user.username = username;
     if (profilePic) user.profilePic = cloudnaryResponse.secure_url;
 
     console.log(profilePic);
-    
+
 
 
     await user.save()
@@ -409,44 +417,79 @@ export const getSuggestedUser = async (req, res) => {
 
 
 
+// export const followORUnfollow = async (req, res) => {
+//   try {
+//     const followKarneWala = req.id;
+//     const jiskoFollowKaruga = req.params.id;
+
+//     // Apna aapko follow/unfollow nahi kar sakte
+//     if (followKarneWala.toString() === jiskoFollowKaruga.toString()) {
+//       return res.status(400).json({ message: "You can't follow/unfollow yourself" });
+//     }
+
+//     const user = await User.findById(followKarneWala);
+//     const targetUser = await User.findById(jiskoFollowKaruga);
+
+//     if (!user || !targetUser) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Check agar already follow kar raha hai
+//     const isFollow = user.following.map(id => id.toString()).includes(jiskoFollowKaruga.toString());
+
+
+
+
+//     if (isFollow) {
+//       // Unfollow
+//       user.following.pull(jiskoFollowKaruga);
+//       targetUser.follower.pull(followKarneWala);
+//       await user.save();
+//       await targetUser.save();
+//       return res.status(200).json({ message: "Unfollowed successfully" });
+//     } else {
+//       // Follow
+//       user.following.push(jiskoFollowKaruga);
+//       targetUser.follower.push(followKarneWala);
+//       await user.save();
+//       await targetUser.save();
+//       return res.status(200).json({ message: "Followed successfully" });
+//     }
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Follow/Unfollow failed' });
+//   }
+// };
+
+
 export const followORUnfollow = async (req, res) => {
-  try {
-    const followKarneWala = req.id;
+  const currentUser = await User.findById(req.id); // ye toh token se aayegi qki auth lga hai router mai ye aapi call krne se phele
+  const targetUser = await User.findById(req.params.id);// jo url mai pass krnge
 
-    const jiskoFollweKruga = req.params.id;
+  if (!currentUser || !targetUser) res.status(404).json({ message: "Error during finding the error" })
 
-    if (followKarneWala === jiskoFollweKruga) {
-      return res.status(400).json({ message: "You can follow/unfollow userself" })
-    }
+  console.log(`Your data : ${currentUser.username} Jisko tum folow krne ki kosis kr rhe ho : ${targetUser.username} `);
 
-    const user = await User.findById(followKarneWala)
+  const followUser = currentUser.following.map(id=>id.toString()).includes(targetUser.id.toString())
+  console.log(followUser);
 
-    const targetUser = await User.findById(jiskoFollweKruga)
+  if (followUser) {
+    currentUser.following.pull(targetUser.id.toString())
 
-    if (!user || !targetUser) {
-      return res.status(400).json({ message: "User Not Found" })
-    }
+    targetUser.follower.pull(currentUser.id.toString())
+   await currentUser.save()
+   await targetUser.save()
 
-    const isFollow = user.following.includes(targetUser)
+    return res.status(200).json({ message: "Unfollowed successfully" });
+  } else {
+    currentUser.following.push(targetUser.id.toString())
 
+    targetUser.follower.push(currentUser.id.toString())
 
-    if (isFollow) {
-      await Promise.all([
-        //unfollw
-        user.updateOne({ _id: followKarneWala }, { $pull: { following: jiskoFollweKruga } }),
-        user.updateOne({ _id: jiskoFollweKruga }, { $pull: { follower: followKarneWala } })
-      ])
-      res.status(200).json({ message: "Unfollow Successfullly" })
-    } else {
-      //follow
-      await Promise.all([
-        user.updateOne({ _id: followKarneWala }, { $push: { following: jiskoFollweKruga } }),
-        user.updateOne({ _id: jiskoFollweKruga }, { $push: { follower: followKarneWala } })
-      ])
-      res.status(200).json({ message: "follow Successfullly" })
-    }
-  } catch (error) {
-    console.error(err);
-    res.status(400).json({ message: 'FollowORUnfollow give error' });
+   await currentUser.save()
+   await targetUser.save()
+
+    return res.status(200).json({ message: "followed successfully" });
   }
 }
