@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 
 const postSchema = new Schema({
@@ -7,8 +7,7 @@ const postSchema = new Schema({
     author:{type:mongoose.Schema.Types.ObjectId ,ref:"User" ,required:true},
     likes:[{type:mongoose.Schema.Types.ObjectId ,ref:"User" ,required:true}],
     comments:[{type:mongoose.Schema.Types.ObjectId ,ref:"comment"}]
-
 })
 
 
-export const POST = mongoose.model("Post" ,postSchema )
+export const Post = mongoose.model("Post" ,postSchema )

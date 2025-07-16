@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema(
 
     profilePic: {
       type: String,
-      default: '',
+      default: 'https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg',
     },
 
     bio: {
@@ -103,6 +103,11 @@ const userSchema = new mongoose.Schema(
     socketId: {
       type: String,
       default: null,
+    },
+    agree:{
+      type:Boolean,
+      required:true,
+      // default:false 
     },
 
     // Password reset fields

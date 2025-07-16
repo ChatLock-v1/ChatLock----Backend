@@ -8,9 +8,9 @@ export const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout',  logOut);
-router.get('/:id/profile',isAuth , getProfile);
-router.post('/editprofile',isAuth ,upload.single('profilePicture') ,editProfile);
+router.get('/profile' ,isAuth , getProfile);
+router.post('/editprofile',isAuth ,upload.single('profilePic') ,editProfile);
 
-router.post('/suggestedUser',isAuth , getSuggestedUser);
+router.get('/suggestedUser',isAuth , getSuggestedUser);
 
 router.post('/followorunfollow/:id',isAuth , followORUnfollow);
