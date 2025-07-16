@@ -104,6 +104,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    agree:{
+      type:Boolean,
+      required:true,
+      // default:false 
+    },
 
     // Password reset fields
     resetPasswordToken: {

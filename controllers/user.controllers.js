@@ -6,7 +6,6 @@ import dotenv from "dotenv"
 
 dotenv.config()
 
-import crypto from "crypto"
 import bcrypt from 'bcryptjs';
 import { getDataUri } from '../utils/dataUri.js';
 import cloudinary from '../middleware/cloudinary.js';
@@ -14,7 +13,7 @@ import cloudinary from '../middleware/cloudinary.js';
 
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, socketId } = req.body;
+    const { username, email, password ,agree} = req.body;
 
     // Validate required fields
     if (!username || !email || !password) {
@@ -41,12 +40,14 @@ export const registerUser = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      socketId
+      agree
+      // socketId
     });
 
     // Respond with safe user info
-    res.status(201).json({
+    res.status(200).json({
       message: 'User registered successfully.',
+      success:true
 
     });
   } catch (err) {
@@ -54,11 +55,6 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: 'Server error during registration.' });
   }
 };
-
-
-
-
-
 
 // login controller
 export const loginUser = async (req, res) => {
@@ -97,8 +93,6 @@ export const loginUser = async (req, res) => {
 
     await user.save();
 
-
-
     const userData = {
       id: user._id,
       username: user.username,
@@ -114,6 +108,7 @@ export const loginUser = async (req, res) => {
       loginDevices: user.loginDevices,
       loginCount: user.loginCount,
       createdAt: user.createdAt,
+      agree:user.agree
     }
     const token = generateToken(user._id);
     console.log(token);
@@ -123,6 +118,7 @@ export const loginUser = async (req, res) => {
       httpOnly: true,
       sameSite: 'Strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
+     success:true
     }).json({ message: `Welcome back ${user.username}`, user: userData });
 
 
@@ -131,12 +127,6 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: 'Server error during login.' });
   }
 };
-
-
-
-
-
-
 
 export const logOut = async (req, res) => {
   try {
